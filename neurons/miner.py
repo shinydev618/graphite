@@ -28,7 +28,7 @@ import graphite
 from graphite.base.miner import BaseMinerNeuron
 from graphite.protocol import IsAlive
 
-from graphite.solvers import NearestNeighbourSolver, DPSolver, NearestNeighbourMultiSolver, NearestNeighbourMultiSolver2, NearestNeighbourMultiSolver4, InsertionMultiSolver, GreedyPortfolioSolver, LKHSolver, LKHmTSPSolver, LKHcmTSPSolver
+from graphite.solvers import NearestNeighbourSolver, DPSolver, NearestNeighbourMultiSolver, NearestNeighbourMultiSolver2, NearestNeighbourMultiSolver4, InsertionMultiSolver, GreedyPortfolioSolver, LKHSolver, LKHmTSPSolver, LKHcmTSPSolver, ImprovedPortfolioSolver, LinearProgrammingPortfolioSolver
 from graphite.protocol import GraphV2Problem, GraphV1Synapse, GraphV2Synapse, GraphV2ProblemMulti, GraphV2ProblemMultiConstrained, GraphV1PortfolioProblem, GraphV1PortfolioSynapse
 from graphite.utils.graph_utils import get_multi_minmax_tour_distance, get_portfolio_distribution_similarity
 
@@ -69,6 +69,8 @@ class Miner(BaseMinerNeuron):
             'multi_large_3': InsertionMultiSolver(), # adapted to handle multi-depot
             'multi_constrained': NearestNeighbourMultiSolver4(),
             'portfolio_v1': GreedyPortfolioSolver(),
+            'portfolio_improved': ImprovedPortfolioSolver(),
+            'portfolio_lp': LinearProgrammingPortfolioSolver(),
             'lkh': LKHSolver(),
             'lkh_mtsp': LKHmTSPSolver(),
             'lkh_cmtsp': LKHcmTSPSolver()
@@ -288,7 +290,7 @@ class Miner(BaseMinerNeuron):
         if isinstance(synapse.problem, GraphV1PortfolioProblem):
             n_swaps, objective_score = None, None
             while n_swaps is None or objective_score == 0:
-                swaps_1 = await self.solvers['portfolio_v1'].solve_problem(synapse.problem)
+                swaps_1 = await self.solvers['portfolio_improved'].solve_problem(synapse.problem)
                 synapse.solution = swaps_1
                 n_swaps, objective_score = get_portfolio_distribution_similarity(synapse)
         

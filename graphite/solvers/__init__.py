@@ -12,3 +12,5 @@ from .greedy_portfolio_solver import GreedyPortfolioSolver
 from .lkh_solver import LKHSolver
 from .lkh_mtsp_solver import LKHmTSPSolver
 from .lkh_cmtsp_solver import LKHcmTSPSolver
+from .improved_portfolio_solver import ImprovedPortfolioSolver
+from .lp_portfolio_solver import LinearProgrammingPortfolioSolver

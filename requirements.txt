@@ -11,3 +11,4 @@ osmium==3.7.0
 huggingface-hub==0.27.0
 Pympler==1.1
 elkai
+scipy
