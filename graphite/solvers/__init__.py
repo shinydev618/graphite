@@ -9,3 +9,6 @@ from .greedy_solver_multi_3 import NearestNeighbourMultiSolver3
 from .greedy_solver_multi_4 import NearestNeighbourMultiSolver4
 from .insertion_solver_multi import InsertionMultiSolver
 from .greedy_portfolio_solver import GreedyPortfolioSolver
+from .lkh_solver import LKHSolver
+from .lkh_mtsp_solver import LKHmTSPSolver
+from .lkh_cmtsp_solver import LKHcmTSPSolver
