@@ -28,7 +28,7 @@ import graphite
 from graphite.base.miner import BaseMinerNeuron
 from graphite.protocol import IsAlive
 
-from graphite.solvers import NearestNeighbourSolver, DPSolver, NearestNeighbourMultiSolver, NearestNeighbourMultiSolver2, NearestNeighbourMultiSolver4, InsertionMultiSolver, GreedyPortfolioSolver, LKHSolver, LKHmTSPSolver, LKHcmTSPSolver, ImprovedPortfolioSolver, LinearProgrammingPortfolioSolver
+from graphite.solvers import NearestNeighbourSolver, DPSolver, NearestNeighbourMultiSolver, NearestNeighbourMultiSolver2, NearestNeighbourMultiSolver4, InsertionMultiSolver, GreedyPortfolioSolver, LKHSolver, LKHmTSPSolver, LKHcmTSPSolver, ImprovedPortfolioSolver, LinearProgrammingPortfolioSolver, FastMultiStartSolver, LKHSolverR, AdaptivePortfolioSolver, ALNSCMTSPsolver, GeneticMTSPsolver, TargetedPortfolioSolver
 from graphite.protocol import GraphV2Problem, GraphV1Synapse, GraphV2Synapse, GraphV2ProblemMulti, GraphV2ProblemMultiConstrained, GraphV1PortfolioProblem, GraphV1PortfolioSynapse
 from graphite.utils.graph_utils import get_multi_minmax_tour_distance, get_portfolio_distribution_similarity
 
@@ -71,9 +71,15 @@ class Miner(BaseMinerNeuron):
             'portfolio_v1': GreedyPortfolioSolver(),
             'portfolio_improved': ImprovedPortfolioSolver(),
             'portfolio_lp': LinearProgrammingPortfolioSolver(),
+            'portfolio_targeted': TargetedPortfolioSolver(),
             'lkh': LKHSolver(),
             'lkh_mtsp': LKHmTSPSolver(),
-            'lkh_cmtsp': LKHcmTSPSolver()
+            'lkh_cmtsp': LKHcmTSPSolver(),
+            'fast_multistart': FastMultiStartSolver(),
+            'lkh_r': LKHSolverR(),
+            'portfolio_adaptive': AdaptivePortfolioSolver(),
+            'alns_cmtsp': ALNSCMTSPsolver(),
+            'genetic_mtsp': GeneticMTSPsolver()
         }
     
     async def is_alive(self, synapse: IsAlive) -> IsAlive:
@@ -125,7 +131,7 @@ class Miner(BaseMinerNeuron):
                 route = await self.solvers['small'].solve_problem(synapse.problem)
             else:
                 # Simple heuristic that does not guarantee optimality. 
-                route = await self.solvers['lkh'].solve_problem(synapse.problem)
+                route = await self.solvers['lkh_r'].solve_problem(synapse.problem)
             synapse.solution = route
         else:
             routes = await self.solvers['multi_large'].solve_problem(synapse.problem)
@@ -175,7 +181,7 @@ class Miner(BaseMinerNeuron):
             route = await self.solvers['small'].solve_problem(synapse.problem)
         else:
             # Simple heuristic that does not guarantee optimality. 
-            route = await self.solvers['lkh'].solve_problem(synapse.problem)
+            route = await self.solvers['lkh_r'].solve_problem(synapse.problem)
         synapse.solution = route
         
         bt.logging.info(
@@ -218,42 +224,46 @@ class Miner(BaseMinerNeuron):
 
         # Conditional assignment of problems to each solver
         if not isinstance(synapse.problem, GraphV2ProblemMulti) and not isinstance(synapse.problem, GraphV2ProblemMultiConstrained):
-            route = await self.solvers['lkh'].solve_problem(synapse.problem)
+            route = await self.solvers['lkh_r'].solve_problem(synapse.problem)
             synapse.solution = route
         elif not isinstance(synapse.problem, GraphV2ProblemMultiConstrained):
             # further split
-            if not synapse.problem.single_depot:
-                # run all 3 basic algorithms and return the best scoring solution
-                routes_1 = await self.solvers['multi_large_2'].solve_problem(synapse.problem)
-                synapse.solution = routes_1
-                score_1 = get_multi_minmax_tour_distance(synapse)
-                routes_2 = await self.solvers['lkh_mtsp'].solve_problem(synapse.problem)
-                synapse.solution = routes_2
-                score_2 = get_multi_minmax_tour_distance(synapse)
-                routes = [routes_1, routes_2]
-                scores = [score_1, score_2]
-            else:
-                routes_1 = await self.solvers['multi_large_1'].solve_problem(synapse.problem)
-                synapse.solution = routes_1
-                score_1 = get_multi_minmax_tour_distance(synapse)
-                routes_2 = await self.solvers['lkh_mtsp'].solve_problem(synapse.problem)
-                synapse.solution = routes_2
-                score_2 = get_multi_minmax_tour_distance(synapse)
-                routes = [routes_1, routes_2]
-                scores = [score_1, score_2]
-            bt.logging.info(f"Selecting algorithm {scores.index(min(scores))}")
-            synapse.solution = routes[scores.index(min(scores))]
+            # if not synapse.problem.single_depot:
+            #     # run all 3 basic algorithms and return the best scoring solution
+            #     routes_1 = await self.solvers['lkh_mtsp'].solve_problem(synapse.problem)
+            #     synapse.solution = routes_1
+            #     score_1 = get_multi_minmax_tour_distance(synapse)
+            #     routes_2 = await self.solvers['multi_large_2'].solve_problem(synapse.problem)
+            #     synapse.solution = routes_2
+            #     score_2 = get_multi_minmax_tour_distance(synapse)
+            #     routes = [routes_1, routes_2]
+            #     scores = [score_1, score_2]
+            # else:
+            #     routes_1 = await self.solvers['lkh_mtsp'].solve_problem(synapse.problem)
+            #     synapse.solution = routes_1
+            #     score_1 = get_multi_minmax_tour_distance(synapse)
+            #     routes_2 = await self.solvers['multi_large_1'].solve_problem(synapse.problem)
+            #     synapse.solution = routes_2
+            #     score_2 = get_multi_minmax_tour_distance(synapse)
+            #     routes = [routes_1, routes_2]
+            #     scores = [score_1, score_2]
+            # bt.logging.info(f"Selecting algorithm {scores.index(min(scores))}")
+            # synapse.solution = routes[scores.index(min(scores))]
+            route = await self.solvers['genetic_mtsp'].solve_problem(synapse.problem)
+            synapse.solution = route
         elif isinstance(synapse.problem, GraphV2ProblemMultiConstrained):
-            routes_1 = await self.solvers['multi_constrained'].solve_problem(synapse.problem)
-            synapse.solution = routes_1
-            score_1 = get_multi_minmax_tour_distance(synapse)
-            routes_2 = await self.solvers['lkh_cmtsp'].solve_problem(synapse.problem)
-            synapse.solution = routes_2
-            score_2 = get_multi_minmax_tour_distance(synapse)
-            routes = [routes_1, routes_2]
-            scores = [score_1, score_2]
-            bt.logging.info(f"Selecting algorithm {scores.index(min(scores))}")
-            synapse.solution = routes[scores.index(min(scores))]
+            # routes_1 = await self.solvers['lkh_cmtsp'].solve_problem(synapse.problem)
+            # synapse.solution = routes_1
+            # score_1 = get_multi_minmax_tour_distance(synapse)
+            # routes_2 = await self.solvers['multi_constrained'].solve_problem(synapse.problem)
+            # synapse.solution = routes_2
+            # score_2 = get_multi_minmax_tour_distance(synapse)
+            # routes = [routes_1, routes_2]
+            # scores = [score_1, score_2]
+            # bt.logging.info(f"Selecting algorithm {scores.index(min(scores))}")
+            # synapse.solution = routes[scores.index(min(scores))]
+            route = await self.solvers['alns_cmtsp'].solve_problem(synapse.problem)
+            synapse.solution = route
         
         # empty out large distance matrix
         if hasattr(synapse.problem, 'edges'):

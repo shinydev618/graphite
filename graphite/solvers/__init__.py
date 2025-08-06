@@ -14,3 +14,9 @@ from .lkh_mtsp_solver import LKHmTSPSolver
 from .lkh_cmtsp_solver import LKHcmTSPSolver
 from .improved_portfolio_solver import ImprovedPortfolioSolver
 from .lp_portfolio_solver import LinearProgrammingPortfolioSolver
+from .fast_multistart_solver import FastMultiStartSolver
+from .lkh_solver_r import LKHSolverR
+from .adaptive_portfolio_solver import AdaptivePortfolioSolver
+from .alns_cmtsp_solver import ALNSCMTSPsolver
+from .genetic_mtsp_solver import GeneticMTSPsolver
+from .targeted_portfolio_solver import TargetedPortfolioSolver

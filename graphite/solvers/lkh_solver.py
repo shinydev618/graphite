@@ -4,12 +4,15 @@ from graphite.protocol import GraphV1Problem, GraphV2Problem
 import elkai
 
 class LKHSolver(BaseSolver):
-    def __init__(self, problem_types:List[Union[GraphV1Problem, GraphV2Problem]]=[GraphV1Problem(n_nodes=2), GraphV2Problem(n_nodes=2)]):
+    def __init__(self, problem_types:List[Union[GraphV1Problem, GraphV2Problem]]=[GraphV1Problem(n_nodes=2), GraphV2Problem()]):
         super().__init__(problem_types=problem_types)
 
     async def solve(self, formatted_problem, future_id:int) -> List[int]:
+        import numpy as np
         distance_matrix = formatted_problem
-        tour = elkai.solve_float_matrix(distance_matrix)
+        # Convert to integer matrix for elkai
+        int_matrix = np.rint(distance_matrix).astype(int).tolist()
+        tour = elkai.solve_float_matrix(int_matrix)
         # Ensure the tour is a valid cycle starting and ending at 0
         if tour[0] != 0:
             # Rotate so that 0 is at the start

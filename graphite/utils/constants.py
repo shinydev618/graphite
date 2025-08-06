@@ -17,17 +17,17 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-from graphite.solvers import NearestNeighbourSolver, NearestNeighbourMultiSolver, BeamSearchSolver, HPNSolver, DPSolver, NearestNeighbourMultiSolver2, NearestNeighbourMultiSolver4, GreedyPortfolioSolver, LKHSolver, LKHmTSPSolver, LKHcmTSPSolver, ImprovedPortfolioSolver, LinearProgrammingPortfolioSolver
+from graphite.solvers import NearestNeighbourSolver, NearestNeighbourMultiSolver, BeamSearchSolver, HPNSolver, DPSolver, NearestNeighbourMultiSolver2, NearestNeighbourMultiSolver4, GreedyPortfolioSolver, LKHSolver, LKHmTSPSolver, LKHcmTSPSolver, ImprovedPortfolioSolver, LinearProgrammingPortfolioSolver, FastMultiStartSolver, LKHSolverR, AdaptivePortfolioSolver, ALNSCMTSPsolver, GeneticMTSPsolver, TargetedPortfolioSolver
 from graphite.utils.graph_utils import get_tour_distance, get_multi_minmax_tour_distance, get_portfolio_distribution_similarity
 
 BENCHMARK_SOLUTIONS = {
-    'Metric TSP': LKHSolver,
-    'General TSP': LKHSolver,
+    'Metric TSP': FastMultiStartSolver,
+    'General TSP': FastMultiStartSolver,
     'Metric mTSP': LKHmTSPSolver,
     'General mTSP': LKHmTSPSolver,
     'Metric cmTSP': LKHcmTSPSolver,
     'General cmTSP': LKHcmTSPSolver,
-    'PortfolioReallocation': ImprovedPortfolioSolver
+    'PortfolioReallocation': AdaptivePortfolioSolver
 } # mapping benchmark solvers to each problem
 
 COST_FUNCTIONS = {
